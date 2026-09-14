@@ -4,17 +4,24 @@ import axios from 'axios';
 function App() {
   const [students, setStudents] = useState([]);
   const [formData, setFormData] = useState({ studentId: '', name: '', email: '' });
-  const [editingId, setEditingId] = useState(null); // Lưu ID của sinh viên đang được sửa
+  const [editingId, setEditingId] = useState(null); 
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
-  const API_URL = '/api/students';
+  //: Đổi thành đường dẫn tuyệt đối trỏ thẳng vào Backend ở cổng 5000
+  const API_URL = 'http://localhost:5000/api/students';
 
   // Lấy danh sách sinh viên
   const fetchStudents = async () => {
     try {
       const res = await axios.get(API_URL);
-      setStudents(res.data);
+      // [ĐÃ THÊM BẢO VỆ]: Đảm bảo dữ liệu set vào state luôn là một mảng
+      if (Array.isArray(res.data)) {
+        setStudents(res.data);
+      } else {
+        setStudents([]); 
+        console.error("Dữ liệu trả về không phải là mảng:", res.data);
+      }
     } catch (err) {
       console.error("Lỗi lấy dữ liệu:", err);
       setError('❌ Không thể tải danh sách. Backend đã chạy chưa?');
@@ -32,11 +39,9 @@ function App() {
     
     try {
       if (editingId) {
-        // Gọi API PUT để Sửa (Câu 61)
         await axios.put(`${API_URL}/${editingId}`, formData);
         setMessage('✅ Cập nhật thông tin thành công!');
       } else {
-        // Gọi API POST để Thêm mới (Câu 49)
         await axios.post(API_URL, formData);
         setMessage('✅ Thêm sinh viên thành công!');
       }
@@ -48,7 +53,7 @@ function App() {
     }
   };
 
-  // Xóa sinh viên (Câu 62)
+  // Xóa sinh viên
   const handleDelete = async (id) => {
     if (!window.confirm('Bạn có chắc chắn muốn xóa sinh viên này?')) return;
     try {
@@ -128,10 +133,12 @@ function App() {
               </tr>
             </thead>
             <tbody>
-              {students.length === 0 ? (
+              {/* [ĐÃ SỬA]: Thêm toán tử bảo vệ students?.length */}
+              {!students || students?.length === 0 ? (
                 <tr><td colSpan="4" style={{textAlign: 'center', padding: '20px'}}>Chưa có dữ liệu sinh viên.</td></tr>
               ) : (
-                students.map((s) => (
+                /* [ĐÃ SỬA]: Thêm dấu ? trước map() */
+                students?.map((s) => (
                   <tr key={s._id} style={styles.tr}>
                     <td style={styles.td}><strong>{s.studentId}</strong></td>
                     <td style={styles.td}>{s.name}</td>
@@ -151,7 +158,7 @@ function App() {
   );
 }
 
-// Tổng hợp CSS (Inline styles) để giao diện bóng bẩy mà không cần tạo thêm file css
+// Tổng hợp CSS (Inline styles)
 const styles = {
   container: { minHeight: '100vh', backgroundColor: '#f0f2f5', padding: '40px 20px', fontFamily: '"Segoe UI", Tahoma, Geneva, Verdana, sans-serif', color: '#333' },
   card: { maxWidth: '900px', margin: '0 auto', backgroundColor: '#fff', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', padding: '30px', overflow: 'hidden' },
